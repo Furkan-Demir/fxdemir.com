@@ -150,78 +150,77 @@
   <div id="asciiContainer"></div>
   <audio id="audio" preload="auto"></audio>
 
+
+
   <script>
+    let frames = [];
     let animationFrameId;
     let isPlaying = false;
 
     document.getElementById('playButton').addEventListener('click', async () => {
       const playButton = document.getElementById('playButton');
-      playButton.disabled = true;
       const asciiContainer = document.getElementById('asciiContainer');
       const audio = document.getElementById('audio');
       const status = document.getElementById('status');
-      if (isPlaying) return;
 
-      status.textContent = 'Loading...';
+      if (isPlaying) return;
+      playButton.disabled = true;
+      status.textContent = 'Loading... It takes a minute to load the resources';
 
       try {
         const jsonUrl = 'https://fxdemirdotcom.s3.eu-north-1.amazonaws.com/badapple.json';
         const mp3Url = '/badapple.mp3';
 
-        if (!audio.src) {
+        if (frames.length === 0) {
           const response = await fetch(jsonUrl);
-          if (!response.ok) {
-            status.textContent = 'Error :(';
-            throw new Error(`Failed to load JSON: ${response.status}`);
-          }
-          status.textContent = '';
-          let frames = await response.json();
-
+          if (!response.ok) throw new Error(`Failed to load JSON: ${response.status}`);
+          frames = await response.json();
           frames = frames.sort((a, b) => a.frameNumber - b.frameNumber);
-          audio.src = mp3Url;
-
-          const frameInterval = 1000 / 12;
-          let currentFrame = 0;
-          const startTime = performance.now();
-
-          const renderFrame = () => {
-            if (!isPlaying) return;
-
-            const elapsedTime = performance.now() - startTime;
-            const targetFrame = Math.floor((elapsedTime / 1000) * 12);
-
-            if (targetFrame >= frames.length) {
-              cancelAnimationFrame(animationFrameId);
-              return;
-            }
-
-            if (targetFrame !== currentFrame) {
-              currentFrame = targetFrame;
-              asciiContainer.textContent = frames[currentFrame].ascii;
-            }
-
-            animationFrameId = requestAnimationFrame(renderFrame);
-          };
-
-          animationFrameId = requestAnimationFrame(renderFrame);
         }
 
-        await audio.play().catch((err) => {
-          console.error('Audio play failed:', err);
-          alert('Audio playback failed. Ensure user interaction.');
-        });
-        isPlaying = true;
+        if (!audio.src) {
+          audio.src = mp3Url;
+          await new Promise((resolve, reject) => {
+            audio.addEventListener('canplaythrough', resolve, { once: true });
+            audio.addEventListener('error', reject, { once: true });
+            audio.load();
+          });
+        }
 
-        audio.addEventListener('ended', () => {
-          isPlaying = false;
-          cancelAnimationFrame(animationFrameId);
-        });
+        const frameInterval = 1000 / 12;
+        let currentFrame = 0;
+        const startTime = performance.now();
+
+        const renderFrame = () => {
+          if (!isPlaying) return;
+
+          const elapsedTime = performance.now() - startTime;
+          const targetFrame = Math.floor((elapsedTime / 1000) * 12);
+
+          if (targetFrame >= frames.length) {
+            cancelAnimationFrame(animationFrameId);
+            isPlaying = false;
+            return;
+          }
+
+          if (targetFrame !== currentFrame) {
+            currentFrame = targetFrame;
+            asciiContainer.textContent = frames[currentFrame]?.ascii || '';
+          }
+
+          animationFrameId = requestAnimationFrame(renderFrame);
+        };
+
+        isPlaying = true;
+        await audio.play();
+        requestAnimationFrame(renderFrame);
+
+        status.textContent = '';
       } catch (error) {
         console.error('Error:', error);
-        alert('Failed to load video or audio. Check console for details.');
+        status.textContent = 'Failed to load resources. Try again.';
       } finally {
         playButton.disabled = false;
-        status.textContent = '';
       }
     });
 
@@ -234,6 +233,7 @@
       }
     });
   </script>
+
 
 
 
