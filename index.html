@@ -137,6 +137,7 @@
   <p>Website: <a href="https://fxdemir.com">fxdemir.com</a></p>
 
   <button id="playButton">Play</button>
+  <p id="status"></p>
   <div id="asciiContainer"></div>
   <audio id="audio" preload="auto"></audio>
 
@@ -147,8 +148,10 @@
     document.getElementById('playButton').addEventListener('click', async () => {
       const asciiContainer = document.getElementById('asciiContainer');
       const audio = document.getElementById('audio');
-
+      const status = document.getElementById('status');
       if (isPlaying) return; 
+
+      status.textContent = 'Loading...';
 
       try {
         
@@ -159,8 +162,10 @@
         if (!audio.src) {
           const response = await fetch(jsonUrl);
           if (!response.ok) {
+            status.textContent = 'Error :(';
             throw new Error(`Failed to load JSON: ${response.status}`);
           }
+          status.textContent = '';
           let frames = await response.json();
 
           
