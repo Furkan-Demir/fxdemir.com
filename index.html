@@ -5,8 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Furkan Demir - Fullstack Developer. AWS, LLM and MERN Stack</title>
-  <meta name="description" content="Furkan Demir is a highly skilled Fullstack Developer with expertise in AWS, LLM, and MERN Stack. Experienced in rapid development, AI integration, and creating AWESOME user experiences." />
-  <meta name="keywords" content="fullstack, developer, aws, llm, mern, stack, furkan, demir, rapid development, AI, dynamic user experiences" />
+  <meta name="description"
+    content="Furkan Demir is a highly skilled Fullstack Developer with expertise in AWS, LLM, and MERN Stack. Experienced in rapid development, AI integration, and creating AWESOME user experiences." />
+  <meta name="keywords"
+    content="fullstack, developer, aws, llm, mern, stack, furkan, demir, rapid development, AI, dynamic user experiences" />
 
   <meta name="author" content="Furkan Demir" />
   <meta name="robots" content="index, follow" />
@@ -27,35 +29,41 @@
       font-size: 14px;
       cursor: pointer;
     }
-    #asciiContainer {
-    font-family: monospace;
-    white-space: pre;
-    background-color: black;
-    color: white;
-    font-size: 10px; /* Changed from fixed 10px to 1vw */
-    line-height: 10px; /* Changed from fixed 10px to 1vw */
-    text-align: center;
-    max-width: 100%;
-    height: 90vh;
-    overflow: auto; /* Added overflow handling */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
 
-  @media screen and (max-width: 768px) {
     #asciiContainer {
-    font-size: 2vw; /* Larger font size for mobile */
-    line-height: 2vw;
+      font-family: monospace;
+      white-space: pre;
+      background-color: black;
+      color: white;
+      font-size: 10px;
+      /* Changed from fixed 10px to 1vw */
+      line-height: 10px;
+      /* Changed from fixed 10px to 1vw */
+      text-align: center;
+      max-width: 100%;
+      height: 90vh;
+      overflow: auto;
+      /* Added overflow handling */
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-  }
+
+    @media screen and (max-width: 768px) {
+      #asciiContainer {
+        font-size: 2vw;
+        /* Larger font size for mobile */
+        line-height: 2vw;
+      }
+    }
   </style>
 </head>
 
 <body>
   <h1>Furkan Demir</h1>
   <h2>Fullstack Developer</h2>
-  <p>yeah, I'm fullstack developer and my portfolio is pure HTML lol. don't have any time for this bs. cuz in my free time, just focus on <a href="https://lufibot.com">Lufi Bot - Meeting Recorder With 1 API</a></p>
+  <p>yeah, I'm fullstack developer and my portfolio is pure HTML lol. don't have any time for this bs. cuz in my free
+    time, just focus on <a href="https://lufibot.com">Lufi Bot - Meeting Recorder With 1 API</a></p>
   <p>
     Fullstack Developer with 4 years in AWS, LLM & MERN Stack projects
   </p>
@@ -136,6 +144,7 @@
   <p>GitHub: <a href="https://github.com/furkan-demir">fxdemir</a></p>
   <p>Website: <a href="https://fxdemir.com">fxdemir.com</a></p>
 
+
   <button id="playButton">Play</button>
   <p id="status"></p>
   <div id="asciiContainer"></div>
@@ -146,19 +155,19 @@
     let isPlaying = false;
 
     document.getElementById('playButton').addEventListener('click', async () => {
+      const playButton = document.getElementById('playButton');
+      playButton.disabled = true;
       const asciiContainer = document.getElementById('asciiContainer');
       const audio = document.getElementById('audio');
       const status = document.getElementById('status');
-      if (isPlaying) return; 
+      if (isPlaying) return;
 
       status.textContent = 'Loading...';
 
       try {
-        
-        const jsonUrl = 'https://fxdemirdotcom.s3.eu-north-1.amazonaws.com/badapple.json'; 
-        const mp3Url = '/badapple.mp3'; 
+        const jsonUrl = 'https://fxdemirdotcom.s3.eu-north-1.amazonaws.com/badapple.json';
+        const mp3Url = '/badapple.mp3';
 
-        
         if (!audio.src) {
           const response = await fetch(jsonUrl);
           if (!response.ok) {
@@ -168,27 +177,22 @@
           status.textContent = '';
           let frames = await response.json();
 
-          
           frames = frames.sort((a, b) => a.frameNumber - b.frameNumber);
-
-          
           audio.src = mp3Url;
 
-          
-          const frameInterval = 1000 / 12; 
+          const frameInterval = 1000 / 12;
           let currentFrame = 0;
-
           const startTime = performance.now();
 
           const renderFrame = () => {
-            if (!isPlaying) return; 
+            if (!isPlaying) return;
 
             const elapsedTime = performance.now() - startTime;
             const targetFrame = Math.floor((elapsedTime / 1000) * 12);
 
             if (targetFrame >= frames.length) {
               cancelAnimationFrame(animationFrameId);
-              return; 
+              return;
             }
 
             if (targetFrame !== currentFrame) {
@@ -202,7 +206,10 @@
           animationFrameId = requestAnimationFrame(renderFrame);
         }
 
-        audio.play();
+        await audio.play().catch((err) => {
+          console.error('Audio play failed:', err);
+          alert('Audio playback failed. Ensure user interaction.');
+        });
         isPlaying = true;
 
         audio.addEventListener('ended', () => {
@@ -212,10 +219,13 @@
       } catch (error) {
         console.error('Error:', error);
         alert('Failed to load video or audio. Check console for details.');
+      } finally {
+        playButton.disabled = false;
+        status.textContent = '';
       }
     });
 
-    document.getElementById('pauseButton').addEventListener('click', () => {
+    document.getElementById('pauseButton')?.addEventListener('click', () => {
       const audio = document.getElementById('audio');
       if (isPlaying) {
         audio.pause();
@@ -223,8 +233,10 @@
         cancelAnimationFrame(animationFrameId);
       }
     });
-
   </script>
+
+
+
 </body>
 
 </html>
