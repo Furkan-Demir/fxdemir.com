@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASCII Video Player - Fxdemir</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: white;
+      color: black;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #asciiContainer {
+      font-family: monospace;
+      white-space: pre;
+      background-color: black;
+      color: white;
+      font-size: 10px;
+      /* Changed from fixed 10px to 1vw */
+      line-height: 10px;
+      /* Changed from fixed 10px to 1vw */
+      text-align: center;
+      max-width: 100%;
+      height: 90vh;
+      overflow: auto;
+      /* Added overflow handling */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @media screen and (max-width: 768px) {
+      #asciiContainer {
+        font-size: 2vw;
+        /* Larger font size for mobile */
+        line-height: 2vw;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <button id="playButton">Play</button>
+  <p id="status"></p>
+  <div id="asciiContainer"></div>
+  <audio id="audio" preload="auto"></audio>
+
+  <script>
+    let frames = [];
+    let animationFrameId;
+    let isPlaying = false;
+
+    document.getElementById('playButton').addEventListener('click', async () => {
+      const playButton = document.getElementById('playButton');
+      const asciiContainer = document.getElementById('asciiContainer');
+      const audio = document.getElementById('audio');
+      const status = document.getElementById('status');
+
+      if (isPlaying) return;
+      playButton.disabled = true;
+      status.textContent = 'Loading... It takes a minute to load the resources';
+
+      try {
+        const jsonUrl = 'https://fxdemirdotcom.s3.eu-north-1.amazonaws.com/badapple.json';
+        const mp3Url = '/badapple.mp3';
+
+        if (frames.length === 0) {
+          const response = await fetch(jsonUrl);
+          if (!response.ok) throw new Error(`Failed to load JSON: ${response.status}`);
+          frames = await response.json();
+          frames = frames.sort((a, b) => a.frameNumber - b.frameNumber);
+        }
+
+        if (!audio.src) {
+          audio.src = mp3Url;
+          await new Promise((resolve, reject) => {
+            audio.addEventListener('canplaythrough', resolve, { once: true });
+            audio.addEventListener('error', reject, { once: true });
+            audio.load();
+          });
+        }
+
+        const frameInterval = 1000 / 12;
+        let currentFrame = 0;
+        const startTime = performance.now();
+
+        const renderFrame = () => {
+          if (!isPlaying) return;
+
+          const elapsedTime = performance.now() - startTime;
+          const targetFrame = Math.floor((elapsedTime / 1000) * 12);
+
+          if (targetFrame >= frames.length) {
+            cancelAnimationFrame(animationFrameId);
+            isPlaying = false;
+            return;
+          }
+
+          if (targetFrame !== currentFrame) {
+            currentFrame = targetFrame;
+            asciiContainer.textContent = frames[currentFrame]?.ascii || '';
+          }
+
+          animationFrameId = requestAnimationFrame(renderFrame);
+        };
+
+        isPlaying = true;
+        await audio.play();
+        requestAnimationFrame(renderFrame);
+
+        status.textContent = '';
+      } catch (error) {
+        console.error('Error:', error);
+        status.textContent = 'Failed to load resources. Try again.';
+      } finally {
+        playButton.disabled = false;
+      }
+    });
+
+    document.getElementById('pauseButton')?.addEventListener('click', () => {
+      const audio = document.getElementById('audio');
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+        cancelAnimationFrame(animationFrameId);
+      }
+    });
+  </script>
+</body>
+
+</html>
